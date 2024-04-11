@@ -6,6 +6,7 @@ format:
     embed-resources: true
     code-tools: true
     code-summary: "Code"
+    assistance from: Eden Kidane, Theary Em
 ---
 
 Remember, **follow the instructions below and use R Markdown to create a pdf document with your code and answers to the following questions on Gradescope.** You may find a template file by clicking "Code" in the top right corner of this page.
@@ -38,9 +39,11 @@ we get this:
 
 `-0.3598621`
 
-
-
 3.  Suppose we simulate `x <- rnorm(1)`. What is the distribution of `pnorm(x)`?
+
+we get this:
+
+`0.1454196`
 
 ## B. Gambler's ruin
 
@@ -48,7 +51,95 @@ A and B are playing a coin flipping game. A starts with $n_a$ pennies and B star
 
 4.  Write a function `run_one_sim(seed, n_a, n_b)` to simulate one game. Repeatedly use your code with different values of `seed` to estimate each player's probability of winning when $n_a = n_b = 10$.
 
+Eden helped me with number 4 and 5
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+run_one_sim <- function(seed, n_a, n_b){
+   
+   while(n_a > 0 & n_b > 0){
+      flips <- sample(x = c("H", "T"),size = 1, replace = T)
+    
+       if (flips == "H") {
+        n_a <- n_a + 1
+        n_b <- n_b - 1
+      } 
+      if (flips == "T") { 
+        n_a <- n_a - 1
+        n_b <- n_b + 1
+      }
+    }
+ 
+  return(list(heads = n_a, tails = n_b))
+}
+
+a_wins <- 0
+b_wins <- 0
+runs <- 1000
+
+for(i in 1:runs){
+  winCount <- run_one_sim((as.integer(runif(1,min = 1,max = 500))),10,10)
+  
+  if(winCount$heads == 0){
+    b_wins <- b_wins + 1
+  }
+  if(winCount$tails == 0){
+    a_wins <- a_wins + 1
+  }
+}
+
+cat("head wins: ", a_wins, '\n')
+cat("tail wins: ", b_wins, '\n\n')
+
+if(a_wins > b_wins){
+  a_wins/runs
+}
+if(b_wins > a_wins){
+  b_wins/runs
+}
+```
+
 5.  Use your function to estimate each player's probability of winning when $n_a = 1,\ldots, 5$ and $n_b = 1,\ldots, 5$, testing every combination. Organize your results in a 5 by 5 matrix and print it out. What do you notice?
+
+```{r}
+p_matrix <- matrix(0, nrow = 5, ncol = 5)
+
+runs <- 1000
+
+for(i in 1:5){ 
+  #i is representation of n_a, in the i'th row of the matrix
+  for(j in 1:5){
+    #j is the representation of n_b, in the j'th column in the matrix
+    a_win <- 0 
+    b_win <- 0
+    for(k in 1:runs){ 
+      
+      runCount <- run_one_sim((as.integer(runif(1,min = 1,max = 500))),i,j)
+      
+      if(runCount$heads == 0){
+        b_win <- b_win + 1
+      }
+      if(runCount$tails == 0){
+        a_win <- a_win + 1
+      }
+    }
+ 
+    if(a_win > b_win){
+      p_matrix[i,j] = a_win/runs
+    }
+    if(b_win > a_win){
+      p_matrix[i,j] =  b_win/runs
+    }
+  } 
+} 
+
+print(p_matrix)
+```
+
+The matrix displays the probability of winning with the position on each axis represented by the number of coins each player has. Unsurprisingly on the diagonal, when each competitor has the same number of coins, they have roughly the same chances to win, or 50 - 50. The farther from the center line we deviate the larger the probability that one player will have an advantage to winning.
 
 ## C. One-dimensional random walks
 
@@ -56,6 +147,58 @@ In this part, you will simulate a one-dimensional random walk. Suppose you are a
 
 6.  Write a function `random_walk()` that takes as input a numeric `n_steps` and a numeric $p$ and simulates `n_steps` steps of the one-dimensional random walk with forward probability $p$. You may have other input arguments if desired. The output should be a length vector of length `n_steps` starting with 0 where the $i$th entry represents the location of the random walker at time $t=i$. For example, `random_walk(5, .5)` may return the vector $(0, 1, 2, 1, 2)$.
 
+```{r}
+random_walk <- function(n_steps, p) {
+  positions <- numeric(n_steps)
+  positions[1] <- 0
+  
+  for (i in 2:n_steps) {
+    random_num <- runif(1)
+    if (random_num <= p) {
+      positions[i] <- positions[i - 1] + 1
+    } else {
+      positions[i] <- positions[i - 1] - 1
+    }
+  }
+  return(positions)
+}
+
+#set.seed(123)
+random_walk(5, 0.5)
+```
+
 7.  Use your function to generate a random walk of 500 steps with probability $.55$ and generate a line graph with $t=1,\ldots, 500$ on the x-axis and $x_1,\ldots, x_{500}$ on the y-axis.
 
+```{r}
+p <- 0.55
+
+plot(1:500, random_walk(500, p), type = "l", 
+     xlab = "Time Steps (t)", ylab = "Position (x)", 
+     main = "One-Dimensional Random Walk")
+
+```
+
 8.  Use your function to generate two more random walks of 500 steps with probability $p$, where $p\sim \mathrm{Unif}(0, 1)$ and create a line graph with all three of your random walks, using different colors for each walk.
+
+```{r}
+#set.seed(123)
+p1 <- runif(1)
+p2 <- runif(1)
+p3 <- runif(1)
+
+random_walk_1 <- random_walk(500, p1)
+random_walk_2 <- random_walk(500, p2)
+random_walk_3 <- random_walk(500, p3)
+
+plot(1:500, random_walk_1,
+     type = "l",
+     col = "darkcyan", 
+     xlab = "Time Steps (t)",
+     ylab = "Position (x)", 
+     main = "Three One Dimensional Walks",
+     ylim = c(-500,500))
+
+lines(1:500, random_walk_2, col = "maroon")
+lines(1:500, random_walk_3, col = "gold")
+
+```
