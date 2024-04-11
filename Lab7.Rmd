@@ -1,6 +1,6 @@
 ---
 title: "Lab 7"
-author: "YOUR NAME HERE"
+author: "Ryan Fernald"
 format: 
   html:
     embed-resources: true
@@ -12,26 +12,50 @@ Remember, **follow the instructions below and use R Markdown to create a pdf doc
 
 ## A. Random sampling in R
 
-1. In your own words, explain the difference between `dnorm()`, `pnorm()`, `qnorm()`, and `rnorm()`.
+1.  In your own words, explain the difference between `dnorm()`, `pnorm()`, `qnorm()`, and `rnorm()`.
 
-2. Suppose we simulate `x <- runif(1)`. What is the distribution of `qnorm(x)`?
+Each of these is related to the normal distribution, or Gaussian distribution.
 
-3. Suppose we simulate `x <- rnorm(1)`. What is the distribution of `pnorm(x)`?
+dnorm: is used to calculate the probability density function of the Normal Distribution at a given point 'x'.
+
+it takes x as the point to evaluate the PDF at, mean, for the mean of the normal distribution, and sd for the standard deviation of the normal dist.
+
+pnorm: calculates the cumulative distribution function of the Normal Distribution.
+
+it takes q as the quantile(s) to evaluate the CDF, mean for the mean, sd for the standard deviation, and lower.tail to check random variables less than or equal to q (either TRUE or FALSE).
+
+qnorm: calculates the quantile function which is essentially the inverse of the CDF, cumulative distributive function, for a Normal Distribution.
+
+it takes p, to specify the probability level(s) at which to calculate the quantile, mean and sd as mean and standard deviation.
+
+rnorm: generates random numbers from a normal distribution.
+
+n is the number of random numbers to generate, mean and sd as mean and standard deviation.
+
+2.  Suppose we simulate `x <- runif(1)`. What is the distribution of `qnorm(x)`?
+
+we get this:
+
+`-0.3598621`
+
+
+
+3.  Suppose we simulate `x <- rnorm(1)`. What is the distribution of `pnorm(x)`?
 
 ## B. Gambler's ruin
 
 A and B are playing a coin flipping game. A starts with $n_a$ pennies and B starts with $n_b$ pennies. A coin is flipped repeatedly and if it comes up heads, B gives A a penny. If it comes up tails, A gives B a penny. The game ends when one player has no more pennies.
 
-4. Write a function `run_one_sim(seed, n_a, n_b)` to simulate one game. Repeatedly use your code with different values of `seed` to estimate each player's probability of winning when $n_a = n_b = 10$.
+4.  Write a function `run_one_sim(seed, n_a, n_b)` to simulate one game. Repeatedly use your code with different values of `seed` to estimate each player's probability of winning when $n_a = n_b = 10$.
 
-5. Use your function to estimate each player's probability of winning when $n_a = 1,\ldots, 5$ and $n_b = 1,\ldots, 5$, testing every combination. Organize your results in a 5 by 5 matrix and print it out. What do you notice?
+5.  Use your function to estimate each player's probability of winning when $n_a = 1,\ldots, 5$ and $n_b = 1,\ldots, 5$, testing every combination. Organize your results in a 5 by 5 matrix and print it out. What do you notice?
 
 ## C. One-dimensional random walks
 
 In this part, you will simulate a one-dimensional random walk. Suppose you are at the point $x$ at time $t$. At time $t+1$, the probability of moving forwards to $x+1$ is $p$ and the chance of moving backwards to $x-1$ is $1-p$. Assume that at time $t=1$, you are at $x_1=0$.
 
-6. Write a function `random_walk()` that takes as input a numeric `n_steps` and a numeric $p$ and simulates `n_steps` steps of the one-dimensional random walk with forward probability $p$. You may have other input arguments if desired. The output should be a length vector of length `n_steps` starting with 0 where the $i$th entry represents the location of the random walker at time $t=i$. For example, `random_walk(5, .5)` may return the vector $(0, 1, 2, 1, 2)$. 
+6.  Write a function `random_walk()` that takes as input a numeric `n_steps` and a numeric $p$ and simulates `n_steps` steps of the one-dimensional random walk with forward probability $p$. You may have other input arguments if desired. The output should be a length vector of length `n_steps` starting with 0 where the $i$th entry represents the location of the random walker at time $t=i$. For example, `random_walk(5, .5)` may return the vector $(0, 1, 2, 1, 2)$.
 
-7. Use your function to generate a random walk of 500 steps with probability $.55$ and generate a line graph with $t=1,\ldots, 500$ on the x-axis and $x_1,\ldots, x_{500}$ on the y-axis.
+7.  Use your function to generate a random walk of 500 steps with probability $.55$ and generate a line graph with $t=1,\ldots, 500$ on the x-axis and $x_1,\ldots, x_{500}$ on the y-axis.
 
-8. Use your function to generate two more random walks of 500 steps with probability $p$, where $p\sim \mathrm{Unif}(0, 1)$ and create a line graph with all three of your random walks, using different colors for each walk.
+8.  Use your function to generate two more random walks of 500 steps with probability $p$, where $p\sim \mathrm{Unif}(0, 1)$ and create a line graph with all three of your random walks, using different colors for each walk.
