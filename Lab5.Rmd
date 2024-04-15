@@ -1,0 +1,161 @@
+---
+title: "Lab 5"
+author: "Ryan Fernald"
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+    code-summary: "Code"
+---
+
+Remember, **follow the instructions below and use R Markdown to create a pdf document with your code and answers to the following questions on Gradescope.** You may find a template file by clicking "Code" in the top right corner of this page.
+
+## 0. Cook County Assessor's Office
+
+For this lab, you will work with data from Cook County Assessor's Office from Illinois, which inspects properties across Chicago and its suburbs to **assess** the value of each property to determine the amount in property taxes owed by each property owner. All property owners are required to pay taxes which are used to fund public services at the state level. These assessments are based on property values which are often estimated via statistical models that account for variables like the size and location of a property.
+
+Since these models determine how much property owners must pay each year, it is desirable to have assessments that are fair. However, in 2017, the office of the former Cook County Assessor Joseph Berrios was sued by two Chicago nonprofits who alleged that Berrios' office ["disproportionately put the burden of residential property taxes on minority homeowners, "](https://apnews.com/1650cd356ca44ada8fcca5a2673e2344) so that wealthy property owners paid proportionally less in taxes compared with lower-income, and often minority, property owners. The Chicago Tribune investigated property assessments from 2003 to 2015, arguing that assessments had indeed been discrimnatory. Their four-part investigation can be found [here.](https://www.chicagotribune.com/investigations/ct-tax-divide-investigation-20180425-storygallery.html)
+
+Since this investigation, the Cook County Assessor's Office has strived to be more transparent in disclosing their methods and data for property valuation. In this assignment, we will look at data they have released on property valuation from [2013-2019](https://datacatalog.cookcountyil.gov/stories/s/p2kt-hk36). The office has also published open-source [code](https://github.com/ccao-data) for their models, which is written in R! This assignment is based on a module developed by instructors at [UC Berkeley](https://data.berkeley.edu/hce-curriculum-package-value-home).
+
+## A. Residential Sales Data
+
+1.  Download the data from [this link](https://datacatalog.cookcountyil.gov/Property-Taxation/Assessor-Archived-05-11-2022-Residential-Sales-Dat/5pge-nu6u/about_data). How many rows are there in this dataset? What does each row represent? (Hint: be precise here).
+
+    ```{r}
+    library(tidyverse)
+    library(ggplot2)
+    library(scales)
+    library(ggthemes)
+    ```
+
+```{r}
+datata <- readr::read_csv('D:\\School\\SJSU\\Classes\\2024 Spring\\R\\Assessor__Archived_05-11-2022__-_Residential_Sales_Data_20240313.csv')
+
+
+```
+
+```{r}
+cat("There are" , nrow(datata), "rows.")
+```
+
+Each row represents a single property.
+
+2.  Examine the `Site Desirability` variable. What do each of the levels of this variable represent? You may need to refer to the [codebook](https://datacatalog.cookcountyil.gov/Property-Taxation/Assessor-Archived-05-11-2022-Residential-Sales-Dat/5pge-nu6u/about_data) to learn about this variable. Is it explained how this variable is determined?
+
+1 = Beneficial to Value, 2 = Not relevant to Value, 3 = Detracts from Value.
+
+3.  Give an example of a variable that is **not** included in this dataset that could be useful in determining property value.
+
+Proximity to beach (or lake in this case). Quality of school district. Number of recent homicides in the area.
+
+4.  Create a histogram of `Sale Price` for this dataset. Identify one issue with this visualization and attempt to address this issue.
+
+```{r}
+filtered_data_sales_price <- datata |>
+  filter(`Sale Price` >= 10 & `Sale Price` <= 1500000)
+
+
+ggplot(data = filtered_data_sales_price,
+       aes(x = `Sale Price`)) +
+        geom_histogram(binwidth = 45000, fill = "lightgreen", color = "darkgreen") + 
+        xlab("Sale Price") +
+        ylab("Frequency") +
+        ggtitle("Histogram of Sale Price") + 
+        theme_solarized(base_size = 10) +
+        theme(axis.title=element_text(size=10))
+
+```
+
+```{r}
+summary(filtered_data_sales_price$`Sale Price`)
+```
+
+```{r}
+cat("sales > $1.5 mill:", sum(as.numeric(datata$`Sale Price`) >= 1500000),"\n")
+cat("sales < $10      :", sum(as.numeric(datata$`Sale Price`) <= 10))
+```
+
+Seems like the number of times a unit was sold with an "unreasonably low" sale price was almost 100 thousand rows out of the 500 thousand row data set.
+
+When making the histogram I filtered out the data under \$10 and greater than \$1.5 million because of the outliers our data was hard to read. Including too many instances that were unrealistic for purchasing a home in the current day (for most people). Sales of homes for \$1 dollar are almost always inheritance, we wouldn't consider that a "Sale" price, it's just a formality because of the law. Only 0.8% of home sales were above \$1.5 million so we can exclude those for clarity. Looking at the summary we can see the mean is somewhere around \$260 thousand, which is much more realistic.
+
+5.  For the rest of the assignment, we will focus on a subset of properties. Provide code that creates a new `data.frame` called `clean_data` that contains only properties whose sale price is at least \$500. Create a new column in this data frame called `log_sale_price` that contains the log-transformed `Sale Price` values.
+
+    ```{r}
+    clean_data <- datata |>
+      filter(`Sale Price` >= 500) |> 
+      mutate(log_sale_price = log10(`Sale Price`))
+      
+    ```
+
+6.  Visualize the association between number of bedrooms and `log_sale_price` using parallel box plots. You may need to convert `Bedrooms` to a factor before you are able to construct the parallel box plots. For clarity, only include properties with 10 or fewer bedrooms. Interpret your results.
+
+```{r}
+clean_data |> 
+  filter(Bedrooms <= 10) |> 
+  mutate(Bedrooms = as.factor(Bedrooms)) |>
+  ggplot(mapping = aes(x = Bedrooms,
+                       y = log_sale_price,
+                       color = Bedrooms)) +
+  geom_boxplot() +
+  ggtitle("Box Plot of by Sale Price (log) by number of bedrooms") +
+  theme_solarized(base_size = 10)
+```
+
+7.  Create a new factor variable called `age_bin` that has levels `1-20`, `21-40`, `41-60`, `61-80`, `81-100`, and `100+`. Visualize the association between `age_bin` and `log_sale_price` using parallel box plots. Interpret your results.
+
+```{r}
+age_breaks <- c(0, 20, 40, 60, 80, 100, Inf)
+
+age_bin_value <- c("1-20", "21-40", "41-60", "61-80", "81-100", "100+")
+
+clean_data <- clean_data |>
+  mutate(age_bin = cut(Age, breaks = age_breaks,labels = age_bin_value))
+
+  ggplot(data = clean_data, mapping = aes(x = age_bin,
+  y = log_sale_price, color = age_bin)) +
+  geom_boxplot() + coord_flip() +
+  theme_solarized(base_size = 10) +
+  ggtitle("Box Plot Sale Prices by Ages with Custom Binning")
+```
+
+The Median age of the property has little effect on the value of the house, as determined by the "Sale Price." While there are outliers on both the high and low side for each age bin, we can assume there are more important factors that effect the price of a property.
+
+## B. Assessor First Pass Values
+
+8.  Not all of the properties in the above dataset have public assessment values. You can download another dataset containing "First Pass Values" representing the Assessor's initial valuations for a set of properties in 2019 [here](https://datacatalog.cookcountyil.gov/Property-Taxation/Assessor-Archived-05-11-2022-First-Pass-Values/x88m-e569/about_data). How many rows are in this dataset?
+
+    ```{r}
+    first_pass_values_data = readr::read_csv("D:\\School\\SJSU\\Classes\\2024 Spring\\R\\Assessor__Archived_05-11-2022__-_First_Pass_Values_20240313.csv")
+    ```
+
+    ```{r}
+    cat("There are" , nrow(first_pass_values_data), "rows.")
+    ```
+
+9.  Use an appropriate function to combine the first pass values data with the `clean_data` from Part A. You should keep only rows that have both `log_sale_price` (from `clean_data`) and `First Pass Value 1` from the first pass values data. How many rows are in this combined dataset?
+
+    ```{r}
+    combined_data <- inner_join(clean_data, first_pass_values_data, by = "PIN")
+    ```
+
+    ```{r}
+    nrow(combined_data)
+    ```
+
+10. Create a scatter plot with `log(First Pass Value 1)` on the x-axis and `log_sale_price` on the y-axis. Add a line to your plot indicating the line where `y=x`. Interpret your results. What do points above the line represent? What do points below the line represent?
+
+```{r}
+combined_data <- combined_data |>
+  mutate(log_fpv1 = log10(`First Pass Value 1`))
+
+ggplot(data = combined_data,
+       mapping = aes(x = log_fpv1, y = log_sale_price)) +
+       geom_point(alpha = 0.5) +
+       geom_abline(slope = 1, intercept = 0, color = "darkblue") 
+```
+
+Points higher than the line indicate properties sold for higher than the expected price.
+
+Points lower than the line indicate properties sold for lower than the expected price.

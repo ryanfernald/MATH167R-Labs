@@ -1,0 +1,223 @@
+---
+title: "Lab 3: Descriptive Statistics"
+author: "Ryan Fernald"
+date: 2024-02-14
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+    code-summary: "Code"
+---
+
+**Follow the instructions below and use R Markdown to create a pdf document with your code and answers to the following questions on Gradescope.** You may find a template file by clicking "Code" in the top right corner of this page.
+
+Your final submission should clearly include all code needed to generate your answers and should be formatted according to the guidelines outlined in class. In particular, make sure:
+
+1.  Code and output are clearly organized by question.
+2.  Unnecessary messages, warning, and output are removed.
+
+You may collaborate with your classmates and consult external resources, but you should write and submit your own answer. **Any classmates with whom you collaborate should be credited at the top of your submission. Similarly, if you consult any external references, you should cite them clearly and explicitly.**
+
+## A. Weather Forecast Data
+
+1.  For this lab, we'll be using data on weather forecasts gathered by student at Saint Louis University. You can read about the dataset [here](https://github.com/rfordatascience/tidytuesday/tree/master/data/2022/2022-12-20). Download the weather forecasts data using the following code:
+
+```{r, message = F}
+weather_forecasts <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-12-20/weather_forecasts.csv')
+
+library(tidyverse)
+```
+
+2.  How many rows are in this dataset? How many columns?
+
+```{r}
+print(paste("Rows in weather_forecasts dataset:" , nrow(weather_forecasts)))  
+```
+
+3.  How many cities are represented in this dataset?
+
+```{r}
+  print(paste("Number of cities in dataset:" , length(unique(weather_forecasts$city))))
+```
+
+4.  Create a new data frame containing only the forecasts for San Jose. You may have to explore the values for the `city` variable.
+
+```{r}
+sanjose_df <- weather_forecasts[weather_forecasts$city == "SAN_JOSE", ]
+```
+
+5.  Compute the mean absolute error between `observed_temp` and `forecast_temp` for San Jose.
+
+```{r}
+sj_abs_error <- abs(sanjose_df$observed_temp - sanjose_df$forecast_temp)
+print(paste("San Jose Mean Absolute Error:" , mean(sj_abs_error, na.rm = T)))
+```
+
+6.  Compute the mean absolute error between `observed_temp` and `forecast_temp` for San Jose using only forecasts made 48 hours in advance.
+
+```{r}
+mean_error <- weather_forecasts |>
+  filter(city == "SAN_JOSE", weather_forecasts$forecast_hours_before == 48) |>
+  mutate(abs_error = abs(observed_temp - forecast_temp)) |>
+  summarise(mean_abs_error = mean(abs_error, na.rm = TRUE))
+print(paste("Mean absolute error:" , mean_error$mean_abs_error))
+```
+
+7.  Compute the mean absolute error between `observed_temp` and `forecast_temp` for San Jose using only forecasts made 12 hours in advance.
+
+```{r}
+mean_error <- weather_forecasts |>
+  filter(city == "SAN_JOSE", weather_forecasts$forecast_hours_before == 12) |>
+  mutate(abs_error = abs(observed_temp - forecast_temp)) |>
+  summarise(mean_abs_error = mean(abs_error, na.rm = TRUE))
+print(paste("Mean absolute error:" , mean_error$mean_abs_error))
+```
+
+8.  Compare your answers to 6 and 7. What do you notice? How does this compare to your expectation?
+
+The mean average error becomes smaller as the number forecast hours before gets smaller, meaning that the closer to the measurement the forecast was made, the closer the prediction. As expected, forecasts made further in advance have higher variance
+
+9.  Pick two cities in this dataset. Investigate whether the forecast accuracy is better for one city than for the other, using an appropriate statistic. Discuss your findings.
+
+```{r}
+#Orlando info
+mean_error <- weather_forecasts |>
+  filter(city == "ORLANDO") |>
+  mutate(abs_error = abs(observed_temp - forecast_temp)) |>
+  summarise(mean_abs_error = mean(abs_error, na.rm = TRUE))
+print(paste("Mean absolute error:" , mean_error$mean_abs_error))
+```
+
+```{r}
+rainy_chance <- weather_forecasts |>
+  filter(city == "ORLANDO" , forecast_outlook == "SHWRS") |>
+  summarise(mean_rain = mean(observed_precip, na.rm = TRUE))
+
+print(paste("Rain observed when predicted showers:" , rainy_chance$mean_rain))
+```
+
+```{r}
+rainy_chance <- weather_forecasts |>
+  filter(city == "ORLANDO" , forecast_outlook != "SHWRS") |>
+  summarise(mean_rain = mean(observed_precip, na.rm = TRUE))
+
+print(paste("Rain observed when showers are not predicted:" , rainy_chance$mean_rain))
+```
+
+```{r}
+rainy_chance <- weather_forecasts |>
+  filter(city == "ORLANDO" , forecast_outlook == "SHWRS") |>
+  summarise(num_days = n_distinct(date))
+print(paste("Number of days with predicted showers in Orlando:", rainy_chance$num_days))
+```
+
+```{r}
+#NYC info
+mean_error <- weather_forecasts |>
+  filter(city == "NEW_YORK_CITY") |>
+  mutate(abs_error = abs(observed_temp - forecast_temp)) |>
+  summarise(mean_abs_error = mean(abs_error, na.rm = TRUE))
+print(paste("Mean absolute error:" , mean_error$mean_abs_error))
+
+```
+
+```{r}
+rainy_chance <- weather_forecasts |>
+  filter(city == "NEW_YORK_CITY" , forecast_outlook == "SHWRS") |>
+  summarise(num_days = n_distinct(date))
+print(paste("Number of days with predicted showers in NYC:", rainy_chance$num_days))
+```
+
+```{r}
+rainy_chance <- weather_forecasts |>
+  filter(city == "NEW_YORK_CITY" , forecast_outlook != "SHWRS") |>
+  summarise(mean_rain = mean(observed_precip, na.rm = TRUE))
+print(paste("Rain observed when showers are not predicted:" , rainy_chance$mean_rain))
+```
+
+```{r}
+rainy_chance <- weather_forecasts |>
+  filter(city == "NEW_YORK_CITY" , forecast_outlook == "SHWRS") |>
+  summarise(mean_rain = mean(observed_precip, na.rm = TRUE))
+print(paste("Rain observed when predicted showers:" , rainy_chance$mean_rain))
+```
+
+I chose the NYC and Orlando and looked at their absolute mean error as a factor of how accurate each city is, as well as each time there was a forecast for showers, how much rain they got. I also checked when showers were not in the forecast how much precipitation was a received. As a summary: NYC is far less consistent when it comes to predicting the weather, as their average absolute error was much higher than Orlando's. New York City had 191 days with predicted showers, Compared to Orlando's 269. The difference between NYC and Orlando is there is still precipitation on days that forecast snow, while Orlando had 0 days of predicted snowfall. When showers are predicted in NYC they will receive a higher amount of rainfall compared to Orlando.
+
+## B. Find your own data
+
+For this component, pick a [Tidy Tuesday dataset](https://github.com/rfordatascience/tidytuesday/tree/master/data/2023) and complete the following activity.
+
+10. Provide a brief description of your dataset. Identify at least two questions you could try to answer using this dataset.
+
+<https://github.com/rfordatascience/tidytuesday/blob/master/data/2023/2023-05-09/readme.md>
+
+I choose this data set about childcare costs, which holds data from the National Database of Childcare Prices. This data set contains a variety of the following:
+
+-   The year and location of the study.
+
+-   The unemployment rate of various demographics.
+
+-   Labor force participation of various demographics.
+
+-   Poverty rates and median income levels
+
+-   Racial demographics.
+
+-   Costs of childcare reported for each category.
+
+I will attempt to answer the following questions:\
+In places with high percentage of one specific race, white, black, Hispanic, ect is there a higher cost of childcare for one race that is significantly higher than the others.
+
+What's the difference between center based care compared to family childcare.
+
+11. Open your dataset in R and compute one or more descriptive statistics that shed light on your questions. Discuss your findings.
+
+```{r}
+childcare_costs <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-05-09/childcare_costs.csv')
+```
+
+12. Are there any limitations of your analysis? Could additional data or more complicated methods improve your analysis? Discuss.
+
+```{r}
+cc_infant <- mean(childcare_costs$mc_infant, na.rm = TRUE)
+cc_todler <- mean(childcare_costs$mc_toddler, na.rm = TRUE)
+cc_preschool <- mean(childcare_costs$mc_preschool, na.rm = TRUE)
+
+print("Cost of Care Center Childcare for:")
+cat("Infant:",cc_infant,"\nTodler:",cc_todler,"\nPreschool",cc_preschool)
+
+fc_infant <- mean(childcare_costs$mfcc_infant, na.rm = TRUE)
+fc_todler <- mean(childcare_costs$mfcc_toddler, na.rm = TRUE)
+fc_preschool <- mean(childcare_costs$mfcc_preschool, na.rm = TRUE)
+  
+
+cat("\n\nCost of Family Care Childcare for:")
+cat("\nInfant:",fc_infant,"\nTodler:",fc_todler,"\nPreschool",fc_preschool)
+
+```
+
+On average the cost of childcare when using a "Care Center," is much higher than "Family Childcare." Across the board it is more expensive to pay for childcare for younger people, with "Care Center Infants" being the most expensive at \$146 a week for full-time care.
+
+```{r}
+cc_white <- childcare_costs |>
+  filter(one_race_w >= 70, total_pop >= 10000)
+avg_cc_white <- mean(cc_white$mcsa, na.rm = TRUE)
+
+cc_black <- childcare_costs |>
+  filter(one_race_b >= 70, total_pop >= 10000)
+avg_cc_black <- mean(cc_black$mcsa, na.rm = TRUE)
+
+cc_hispanic <- childcare_costs |>
+  filter(one_race_h >= 70, total_pop >= 10000)
+avg_cc_hispanic <- mean(cc_hispanic$mcsa, na.rm = TRUE)
+
+cat("Cost of Care Center Childcare by race for:")
+cat("\nWhite:",avg_cc_white,"\nBlack:",avg_cc_black,"\nHispanic",avg_cc_hispanic)
+```
+
+On average the cost of child care in a for a study with a population of over 10 thousand people, where the majority of the population is one race, (ie. 70% white or black) The white household on average pay significantly more for care center childcare per week.
+
+*there was no study in which 70% of the population was hispanic*
+
+It is also important to note that this is not definitive by any means, there is too much information missing from this to determine the possible cause of this discrepancy.

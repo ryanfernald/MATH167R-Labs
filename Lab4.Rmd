@@ -1,0 +1,288 @@
+---
+title: "Lab 4: Data Visualization"
+author: "Ryan Fernald"
+date: ""
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+    code-summary: "Code"
+    assistance by: Eden Kidane
+---
+
+Remember, **follow the instructions below and use R Markdown to create a pdf document with your code and answers to the following questions on Gradescope.** You may find a template file by clicking "Code" in the top right corner of this page.
+
+### Collaborators
+
+INSERT NAMES OF ANY COLLABORATORS
+
+```{r}
+# LOAD ANY RELEVANT PACKAGES HERE
+library(tidyverse)
+library(dplyr)
+library(ggthemes)
+library(reshape)
+library(reshape2)
+library(palmerpenguins)
+```
+
+## A. Basic visualizations
+
+For this portion, we'll be using the `palmerpenguins` data. Use the following code to load the data.
+
+```{r}
+data(penguins)
+```
+
+1.  Create and interpret a histogram of `bill_length_mm` using base R code. Be sure to use meaningful axis labels and titles.
+
+```{r}
+hist(penguins$bill_length_mm,
+     main = "Bill Length in Millimeters", 
+     xlab = "Bill Length (mm)")
+```
+
+1.  Create and interpret a histogram of `bill_length_mm` using ggplot2. Be sure to use meaningful axis labels and titles.
+
+```{r}
+ggplot(data = penguins,
+       aes(x = bill_length_mm)) +
+  geom_histogram(fill = "lightblue") +
+  xlab("Bill Length (mm)") +
+  ylab("Frequency") +
+  ggtitle("Histogram of Bill Length (mm)") + 
+  theme_wsj(base_size = 6)+
+  theme(axis.title=element_text(size=12))
+```
+
+1.  Create and interpret a scatterplot of `bill_length_mm` versus `bill_depth_mm` using base R code. Be sure to use meaningful axis labels and titles.
+
+    ```{r}
+    plot(
+      x = penguins$bill_length_mm, 
+      y = penguins$bill_depth_mm, 
+      main = "Bill Length vs. Bill Depth",
+      xlab = "Bill Length (mm)",
+      ylab = "Bill Depth (mm)",
+      col = "blue",
+    )
+    ```
+
+2.  Create and interpret a scatterplot of `bill_length_mm` versus `bill_depth_mm` using ggplot2. Be sure to use meaningful axis labels and titles.
+
+```{r}
+ggplot(data = penguins,
+       aes(x = bill_length_mm, y = bill_depth_mm)) +
+  geom_point(color = "darkgreen") +
+  xlab("Bill Length (mm)") +
+  ylab("Bill Depth (mm)") +
+  ggtitle("Scatterplot of bill length and bill depth") + 
+  theme_wsj(base_size = 6)+
+  theme(axis.title=element_text(size=12))
+```
+
+1.  Update your `ggplot2` scatterplot of `bill_length_mm` versus `bill_depth_mm` using ggplot2 so that the color of a point represents the corresponding penguin's species. What do you notice?
+
+    ```{r}
+    ggplot(data = penguins,
+           aes(x = bill_length_mm, y = bill_depth_mm, color = species)) +
+      geom_point(alpha = .5) +
+      theme_wsj(base_size = 5) +
+      xlab("Bill Length (mm)") +
+      ylab("Bill Depth (mm)") +
+      ggtitle("Scatterplot of bill length and bill depth") + 
+      theme_wsj(base_size = 6) +
+      theme(axis.title=element_text(size=12)) 
+    ```
+
+Each species of penguins tend to have similar Bill Length and Bill Depth, you can see the cluster of points more clearly when we add the color parameter to ggplot.
+
+## B. Analyzing trends in San Jose rental prices
+
+For this component, you will be exploring and visualizing data on Craigslist apartment rental postings in the Bay Area. The data are available [here](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-07-05/rent.csv) from Tidy Tuesday, as prepared by [Dr. Kate Pennington](https://github.com/rfordatascience/tidytuesday/blob/master/data/2022/2022-07-05/readme.md). Note that you can use links within `read_csv()` to read online .csv files. I recommend saving a version of the unprocessed .csv on your machine in a `data` subfolder within your project folder so you will be able to work offline.
+
+```{r}
+rent <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-07-05/rent.csv')
+```
+
+1.  How many 1 bedroom listings from Santa Clara county are in this dataset?
+
+```{r}
+num_1_bedroom <- rent |>
+  filter(county == "santa clara" & beds == 1) 
+print(paste("1 bedroom appartments: ", nrow(num_1_bedroom)))
+```
+
+2.  What is the median price for a 1 bedroom listing in Santa Clara county in 2018?
+
+```{r}
+mean_1_bed <- rent |>
+  filter(county == "santa clara" & beds == 1 & year == "2018")
+print(paste("Average price for a 1 bedroom in Santa Clara is $", median(mean_1_bed$price), "per month"))
+
+```
+
+3.  Which county has the highest median price for a 1 bedroom listing in 2018?
+
+```{r}
+county_avg_price <- rent |> 
+  filter(beds == 1 & year == 2018) |>
+  group_by(county) |>
+  summarize(avg_price = median(price , na.rm = T)) |>
+  arrange(desc(avg_price))
+county_avg_price
+
+```
+
+San Francisco has the highest median price for a 1 bedroom listing at an median price of \$3000.
+
+4.  Create two histograms for the prices of 1 bedroom listings in Santa Clara county in 2005 and 2018. Compare and discuss.
+
+```{r}
+hist2018 <- rent |>
+  filter(county == "santa clara" & beds == 1, year == 2018) 
+  
+ggplot(data = hist2018,
+       aes(x = price)) +
+  geom_histogram(fill = "pink")+
+  xlab("Cost") +
+  ylab("Count") +
+  ggtitle("Cost of a 1 bedroom 2018 santa clara") + 
+  theme_wsj(base_size = 6)+
+  theme(axis.title=element_text(size=12))
+
+hist2005 <- rent |>
+  filter(county == "santa clara" & beds == 1, year == 2005) 
+  
+ggplot(data = hist2005,
+       aes(x = price)) +
+  geom_histogram(fill = "darkgreen") +
+  xlab("Cost") +
+  ylab("Count") +
+  ggtitle("Cost of a 1 bedroom in 2005 in santa clara") + 
+  theme_wsj(base_size = 6)+
+  theme(axis.title=element_text(size=12))
+```
+
+The cost of a 1 bedroom listing in 2005 was much less than it is in 2018 which is not surprising. While each distribution is uni-modal and relatively normal, there is about a 1 thousand dollar difference between the medians.
+
+5.  Create and interpret a line plot with year on the x-axis and median price for a 1 bedroom apartment for Santa Clara county on the y-axis from 2000 to 2018.
+
+```{r}
+filtered_data_123 <- rent |>
+  filter(county == "santa clara" & beds == 1) |> 
+  group_by(year) |> 
+  summarize(price_all = median(price, na.rm = TRUE))
+
+ggplot(filtered_data_123, aes(x = filtered_data_123$year,
+                              y = price_all, na.rm = TRUE,
+                              color = price_all)) +
+  geom_line() + 
+  xlab("Year") +
+  ylab("Cost") +
+  ggtitle("Cost of a 1 bedroom in from 2000 to 2018 in santa clara") + 
+  theme_wsj(base_size = 6)+
+  theme(axis.title=element_text(size=12))
+
+```
+
+The cost of a 1 bedroom apartment rental in Santa Clara increased fairly consistently over the years of 2000 to 2018. The trend is mostly linear.
+
+6.  Create and interpret a single plot with year on the x-axis and median price for a 1 bedroom apartment on the y-axis, using a separate line for each city in Santa Clara county, for the years 2000 to 2018.
+
+```{r}
+filtering_again <- rent |>
+  filter(county == "santa clara" & beds == 1) |> 
+  group_by(year, city) |> 
+  summarize(price_all = median(price, na.rm = TRUE))
+
+ggplot(filtering_again, aes(x = year,
+                              y = price_all, na.rm = TRUE,
+                              color = city)) +
+  geom_line() + 
+  xlab("Year") +
+  ylab("Cost") +
+  ggtitle("Cost of a 1 bedroom in from 2000 to 2018\n in  santa clara seperated by city") +
+  theme_wsj(base_size = 6)+
+  theme(axis.title=element_text(size=12))
+```
+
+The graph shows the relationship between year and cost of a 1 bedroom apartment in Santa Clara county between 2000 and 2018. We can see a relatively linear relationship depicting an increase in cost as time increases with a moderate variance.
+
+## C. Open ended data visualization
+
+For this part, choose a dataset that interests you and identify a set of questions that you would like to explore via data visualizations. In particular, you should create three visualizations that satisfy the following requirements.
+
+### Instructions
+
+-   Identify three research questions of interest that you want to study using this dataset.
+-   For each of your three research questions, generate a data visualization using your dataset. Discuss and interpret your findings.
+-   Your project should include at least two different types of visualizations (e.g. scatterplots, box plots, bar plots, histograms, line plots, etc.).
+-   At least one of your plots should display variation over time or location (or both) in some way.
+-   Each visualization should include a caption that fully explains how to understand your visualization (i.e. explain all the components, legends, etc.). A good guideline is that someone who has not read your report should be able to look at just a visualization and its caption and fully understand what that visualization is showing.
+-   Each visualization must be accompanied by at least one paragraph of text. This text should include an interpretation of your visualization as well as what is interesting about your visualization. A strong visualization will be accompanied by text explaining what patterns or insights it helps us glean from the data.
+
+```{r}
+earnings <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-23/earn.csv")
+
+```
+
+#### Which age range has the highest earnings?
+
+```{r}
+age_earnings <- earnings |>
+  filter(race == "All Races" & ethnic_origin == "All Origins") |> 
+  group_by(age, year) |> 
+  summarize(age_earnings_median = median(median_weekly_earn, na.rm = TRUE))
+
+ggplot(age_earnings, aes(x = age_earnings$year,
+                            y = age_earnings_median, na.rm = TRUE,
+                            color = age)) +
+  geom_line() + 
+  xlab("Year") +
+  ylab("Earnings") +
+  ggtitle("Average earnings of different ages by year.") +
+  theme_wsj(base_size = 6)+
+  theme(axis.title=element_text(size=12))
+```
+
+The graph above depicts a line plot showing the relationship between median earnings and time. The graph clearly shows a positive relationship meaning as time increases the median earnings also increases. Each line on the graph depicts a different age cohort so we can easily see which groups are earning more than their counterparts. As expected individuals between 16 and 24 earn substantially less than those at the top of the income spectrum such as the 45 to 64 range. While younger people are often focusing on education between 16 and 24, it is interesting to see how the wages have increased somewhat less than While this graph clearly shows the amount of money being brought in it does not depict many other factors which contribute to an individuals financial picture. One important factor that is not recognized is inflation. While many wages have consistently increased over the years it has been well documented that often times raises do not keep up with inflation.
+
+#### Which racial demographic has the highest earnings?
+
+```{r}
+hist_data <- earnings |>
+  group_by(race, age) |> 
+  summarize(median_income = median(median_weekly_earn, na.rm = TRUE))
+
+ggplot(hist_data, aes(x = race, y = age, fill = median_income)) + 
+         geom_tile() +
+  xlab("Race") +
+  ylab("Age Brackets") +
+  ggtitle("Heatmap of median income across age and race") +
+  theme_wsj(base_size = 6)+
+  theme(axis.title=element_text(size=12))
+```
+
+The heatmap depicted above offers a detailed overview of earnings differentials across racial and age demographics. Using varying shades to represent income levels, from lighter colors denoting higher earnings to darker ones indicating lower wages, the graph presents a sobering picture of socioeconomic disparities. With race plotted on the x-axis and age brackets on the y-axis, the heatmap provides a clear visualization of how income varies within and between these demographic groups. The contrast between light and dark areas underscores significant inequalities, with certain racial and age cohorts consistently experiencing disparate economic outcomes. This visual representation underscores the persistent challenges faced by marginalized communities and emphasizes the urgent need for targeted interventions to address disparities in economic opportunity. While the heatmap offers valuable insights into earnings inequality, it also underscores the imperative of adopting a comprehensive approach to understanding and remedying socioeconomic inequities.
+
+#### How have Mens / Womens and All Sexes wages changed over years?
+
+```{r}
+sex_earnings <- earnings |>
+  filter(race == "All Races" & ethnic_origin == "All Origins") |> 
+  group_by(sex, year) |> 
+  summarize(avg_sex_earnings = median(median_weekly_earn, na.rm = TRUE))
+
+ggplot(sex_earnings, aes(x = sex_earnings$year,
+                         y = avg_sex_earnings,
+                         color = sex)) +
+  geom_line() + 
+  xlab("Year") +
+  ylab("Earnings") +
+  ggtitle("Average earnings of different sexes by year.") +
+  theme_wsj(base_size = 6)+
+  theme(axis.title=element_text(size=12))
+```
+
+The graph presented above offers a visual representation of earnings trends over time, distinguishing between sexes. Each line corresponds to a different gender group, delineating the dynamics of income between sexes. Unsurprisingly, the data reveals a consistent pattern: males tend to earn more than all genders, who in turn earn more than females. This divergence underscores persistent disparities in earnings, reflecting broader societal trends. While such disparities are expected, it's noteworthy to observe the degree of variation across the genders depicted. While the graph displays the earnings landscape, it's important to recognize its limitations; it provides a snapshot of income trends but does not capture the multifaceted nature of financial well-being. One critical aspect absent from this depiction is the impact of limited access to childcare and paid parental leave which tends to impact females at higher rates than males. This can erode the purchasing power of wages for women over time and has long been a point of debate when discussing the gender pay gap. Thus, while the graph elucidates earnings disparities, it also serves as a reminder of the broader economic challenges facing different gender groups.
