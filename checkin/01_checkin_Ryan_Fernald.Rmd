@@ -1,0 +1,32 @@
+---
+title: "Check-in 1: R Markdown"
+author: "Ryan Fernald"
+date: "2024-01-29"
+output: html_document
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+    code-summary: "Code"
+---
+
+1.  This is a code chunk that opens the `mtcars` dataset, which contains information about on 32 cars from a 1974 issue of the magazine *Motor Trend* and creates a scatter plot with horsepower `hp` on the x-axis and miles-per-gallon `mpg` on the y-axis. Try running this code and Rendering/Knitting your Rmd document. If you have done this correctly, RStudio should produce an html document.
+
+```{r, eval = T}
+data(mtcars)
+plot(mtcars$hp, mtcars$mpg)
+```
+
+2.  Using this scatter plot, describe the relationship between `mpg` and `hp`.
+
+The data appears to have a slight negative correlation between, meaning the lower the horse power, the higher the MPG, conversely the higher the horse power the lower the MPG.
+
+3.  Create your own code chunk below this question containing the line of code `print("Hello MATH167R!")`. Then Render/Knit your Rmd document. If you have done this correctly, RStudio should produce an html document.
+
+```{r, eval = T}
+print("Hello MATH167R!")
+```
+
+$$
+ \begin{array}{l}I_{n}( x) =\frac{2n}{x}\int _{-1}^{1} z\left( 1-z^{2}\right)^{n-1} sin( xz) \ dz=\frac{2n}{x^{2}}\int _{-1}^{1}\left[\left( 1-z^{2}\right)^{n-1} -2z^{2}( n-1)\left( 1-z^{2}\right)^{n-2}\right] \cdotp cos( xz) \ dz\\\\\cdots \\\\I_{n}( x) =\frac{2n}{x}\int _{-1}^{1} z\left( 1-z^{2}\right)^{n-1} sin( x\cdotp \ z) \ dz\\\\\begin{array}{|l|c|}\hlineu=z\cdotp \left( 1-z^{2}\right)^{n-1} & dv=sin( xz) \ dz\\\hlinedu=\left( 1-z^{2}\right)^{n-1} +z\cdotp \left(( n-1)\left( 1-z^{2}\right)^{n-2} \cdotp ( -2z)\right) \ dz & v=-\frac{1}{x} \cdotp cos( xz)\\\hline\end{array}\\\\\int udv=uv-\int vdu\\\\{\textstyle =\frac{2n}{x}\left[\left[ z\cdotp \left( 1-z^{2}\right)^{n-1}\frac{1}{x} \cdotp cos( xz)\right]_{-1}^{1} -\int _{-1}^{1} -\frac{1}{x} \cdotp cos( xz) \cdotp \left(\left( 1-z^{2}\right)^{n-1} +z\cdotp ( n-1)\left( 1-z^{2}\right)^{n-2} \cdotp ( -2z)\right) \ dz\right]}\\\\=0+\frac{2n}{x^{2}}\int _{-1}^{1}\left[\left( 1-z^{2}\right)^{n-1} -2z^{2}( n-1)\left( 1-z^{2}\right)\right] \cdotp cos( xz) \ dz\\\\=\frac{2n}{x^{2}}\int _{-1}^{1}\left[\left( 1-z^{2}\right)^{n-1} -2z^{2}( n-1)\left( 1-z^{2}\right)^{n-2} \cdotp cos( xz) \ dz\right]\end{array}
+$$
