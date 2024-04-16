@@ -18,7 +18,8 @@ flips <- read_csv("https://math167r-s24.github.io/static/flips.csv")
 head(flips)
 ```
 
-1. Design your own hypothesis test to try to identify the sequence of real flips. Design your own test statistic and simulate the null distribution of your test statistic. Can you identify which sequence is the real one?
+1.  Design your own hypothesis test to try to identify the sequence of real flips. Design your own test statistic and simulate the null distribution of your test statistic. Can you identify which sequence is the real one?
+
 ```{r}
 flips_long <- flips |>
   mutate(id = 1:200) |>
@@ -35,32 +36,35 @@ flips_long |>
   )
 
 ```
+
 ```{r}
 flip_count <- flips_long |>
   group_by(Sequence) |>
   summarize(flip_count_total = length(rle(Flip)$length))
 flip_count
 ```
+
 ```{r}
 sim_streaks <- 
   data.frame(
-    x = replicate(1000, 
-                  max(rle(sample(c("H", "T"), size = 200, replace = T))$length)
+    x = replicate(10000, 
+                  length(rle(sample(c("H", "T"), size = 200, replace = T))$length)
     )
   )
 
 p_vals <- sapply(flip_count$flip_count_total,
-                 function(x) mean(abs(sim_totals - 100) < (x - 100)))
+                 function (x) mean(sim_streaks$x > x))
 p_vals
 ```
 
 ```{r}
-
 ggplot() +
   geom_histogram(data = sim_streaks, aes(x = x)) +
-  geom_vline(data = flip_streak_length,
-             aes(color = Sequence, xintercept = flip_count)) +
-  xlab("Longest streak length")
+  geom_vline(data = flip_count,
+             aes(color = Sequence, xintercept = flip_count_total)) +
+  xlab("Flip Counts")
 ```
 
+The histogram tells us there are really only two options that are the most likely. 
 
+A and E are unlikely because they have too many flips, B is unlikely because it doesn't have enough, while C and D are both possible options.
