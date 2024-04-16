@@ -1,0 +1,66 @@
+---
+title: "Check-in 7"
+author: "Ryan Fernald"
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+    code-summary: "Code"
+---
+
+Remember, **follow the instructions below and use R Markdown to create a pdf document with your code and answers to the following questions on Gradescope.** You may find a template file by clicking "Code" in the top right corner of this page.
+
+Load the flips data using the following code:
+
+```{r, warning = F, message = F}
+library(tidyverse)
+flips <- read_csv("https://math167r-s24.github.io/static/flips.csv")
+head(flips)
+```
+
+1. Design your own hypothesis test to try to identify the sequence of real flips. Design your own test statistic and simulate the null distribution of your test statistic. Can you identify which sequence is the real one?
+```{r}
+flips_long <- flips |>
+  mutate(id = 1:200) |>
+  pivot_longer(-id,  names_to = "Sequence", values_to = "Flip")
+
+flips_long |> 
+  ggplot(aes(x = id, y = Flip, group = Sequence)) +
+  geom_line() +
+  geom_point(aes(color = Flip)) +
+  facet_grid(rows = vars(Sequence)) + 
+  theme(
+    legend.position = "none",
+    axis.title = element_blank()
+  )
+
+```
+```{r}
+flip_count <- flips_long |>
+  group_by(Sequence) |>
+  summarize(flip_count_total = length(rle(Flip)$length))
+flip_count
+```
+```{r}
+sim_streaks <- 
+  data.frame(
+    x = replicate(1000, 
+                  max(rle(sample(c("H", "T"), size = 200, replace = T))$length)
+    )
+  )
+
+p_vals <- sapply(flip_count$flip_count_total,
+                 function(x) mean(abs(sim_totals - 100) < (x - 100)))
+p_vals
+```
+
+```{r}
+
+ggplot() +
+  geom_histogram(data = sim_streaks, aes(x = x)) +
+  geom_vline(data = flip_streak_length,
+             aes(color = Sequence, xintercept = flip_count)) +
+  xlab("Longest streak length")
+```
+
+
