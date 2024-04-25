@@ -102,8 +102,9 @@ frequentist_coverage <- function(n, p) {
 }
 ```
 
-        
-    b.  Next, write a second function that takes three inputs: `n`, `p`, and `n_runs`, representing the number of times to run your simulation. This function should use your function from (a) to simulate `n_runs` binomial random variables and return the proportion of the `n_runs` for which $p$ is contained in the confidence interval.
+```         
+b.  Next, write a second function that takes three inputs: `n`, `p`, and `n_runs`, representing the number of times to run your simulation. This function should use your function from (a) to simulate `n_runs` binomial random variables and return the proportion of the `n_runs` for which $p$ is contained in the confidence interval.
+```
 
 ```{r}
 coverage_simulation <- function(n, p, n_runs) {
@@ -114,14 +115,18 @@ coverage_simulation <- function(n, p, n_runs) {
 }
 ```
 
-    c.  Test your function from (b) with `n = 20`, `p = .5`, and `n_runs = 1000`.
-    
+```         
+c.  Test your function from (b) with `n = 20`, `p = .5`, and `n_runs = 1000`.
+```
+
 ```{r}
 coverage_simulation(n_runs = 1000, n = 20, p = .5)
 ```
-    
-    d.  Use your simulation code to investigate the following questions: For what values of `n` and `p` is the frequentist coverage close to the expected 95% value? For what values of `n` and `p` is the frequentist coverage very different to the expected 95% value?
-    
+
+```         
+d.  Use your simulation code to investigate the following questions: For what values of `n` and `p` is the frequentist coverage close to the expected 95% value? For what values of `n` and `p` is the frequentist coverage very different to the expected 95% value?
+```
+
 ```{r}
 coverage_simulation(n_runs = 10, n = 5, p = .5)
 coverage_simulation(n_runs = 1000, n = 5, p = .5)
@@ -129,8 +134,8 @@ coverage_simulation(n_runs = 20, n = 500, p = .5)
 coverage_simulation(n_runs = 1000000, n = 10000, p = .5)
 
 ```
-    
 
+When I have significantly large enough number of runs or a significanyly large enough n, the coverage is closest to it's expected 95% value. 
 
 ## C. Hypothesis Testing
 
@@ -142,15 +147,106 @@ library(nycflights13)
 data("flights")
 flights_sample <- flights |> 
   filter(carrier %in% c("HA", "AS"))
+head(flights_sample)
 ```
 
 6.  Compute a 95% confidence interval for the mean `arr_delay` for Alaska Airlines flights. Interpret your results.
 
+```{r}
+alaska_flights_sample <- flights_sample |> 
+  filter(carrier == "AS")
+head(alaska_flights_sample)
+```
+
+```{r}
+mean_ak_arr_delay <- mean(alaska_flights_sample$arr_delay, na.rm = TRUE)
+sd_ak_arr_delay <- sd(alaska_flights_sample$arr_delay, na.rm = TRUE)
+```
+
+```{r}
+z <- qnorm(1 - 0.05/2)
+
+ci_variance <- z * ( sd_ak_arr_delay / sqrt(length(alaska_flights_sample$arr_delay)))
+
+low_ci_ak <- mean_ak_arr_delay - ci_variance
+high_ci_ak <- mean_ak_arr_delay + ci_variance
+
+ci_ak <- c(low_ci_ak, high_ci_ak)
+
+cat("low ci:", ci_ak[1], "     high ci:", ci_ak[2])
+```
+
+The low end of the confidence interval is -12, while the high for the confidence interval is -7. Meaning that the average arrival delay for flights on Alaskan airlines are statistically better, or "less delayed" than other flights. 
+
 7.  Compute a 95% confidence interval for the mean `arr_delay` for Hawaiian Airlines flights. Interpret your results.
+
+```{r}
+hawaii_flights_sample <- flights_sample |> 
+  filter(carrier == "HA")
+head(hawaii_flights_sample)
+```
+
+```{r}
+mean_ha_arr_delay <- mean(hawaii_flights_sample$arr_delay, na.rm = TRUE)
+sd_ha_arr_delay <- sd(hawaii_flights_sample$arr_delay, na.rm = TRUE)
+```
+
+```{r}
+z <- qnorm(1 - 0.05/2)
+
+ci_variance <- z * ( sd_ha_arr_delay / sqrt(length(hawaii_flights_sample$arr_delay)))
+
+low_ci_ak <- mean_ha_arr_delay - ci_variance
+high_ci_ak <- mean_ha_arr_delay + ci_variance
+
+ci_ak <- c(low_ci_ak, high_ci_ak)
+
+cat("low ci:", ci_ak[1], "     high ci:", ci_ak[2])
+```
+
+The confidence interval for hawaiian airlines flights' arrival delays has a low bound to the confidence interval of -14, and a high of 1.0, this is a wider interval compared to the Alaskan airlines.
 
 8.  Compute a 95% confidence interval for the proportion of flights for which `arr_delay > 0` for Hawaiian Airlines flights. Interpret your results.
 
+```{r}
+hawaii_flights_sample <- flights_sample |> 
+  filter(carrier == "HA", arr_delay > 0)
+
+mean_ha_arr_delay <- mean(hawaii_flights_sample$arr_delay, na.rm = TRUE)
+sd_ha_arr_delay <- sd(hawaii_flights_sample$arr_delay, na.rm = TRUE)
+
+z <- qnorm(1 - 0.05/2)
+
+ci_variance <- z * ( sd_ha_arr_delay / sqrt(length(hawaii_flights_sample$arr_delay)))
+
+low_ci_ak <- mean_ha_arr_delay - ci_variance
+high_ci_ak <- mean_ha_arr_delay + ci_variance
+
+ci_ak <- c(low_ci_ak, high_ci_ak)
+
+cat("low ci:", ci_ak[1], "     high ci:", ci_ak[2])
+```
+
+The arrival delay for the portion of Hawaiian airlines flights arrival delay > 0, is very wide with a lower bound of 9 and a upper bound of 61, which is over an hour. So while the mean of all flight delays coming from Hawaiian airlines, is better than the average of all airlines, it is still fairly bad because of the inconsistency in the range of time to which the flight arrival can be delayed. 
+
 9.  Consider the null hypothesis that the mean `arr_delay` for Alaska is equal to the mean `arr_delay` for Hawaiian and the alternative hypothesis that the mean `arr_delay` values are different for the two airlines. Perform an appropriate hypothesis test and interpret your results.
+
+```{r}
+
+#H_0 is that arr_delay HA == arr_delay AS
+#H_A is that this^ =/=
+
+hawaii_flights <- flights_sample |> 
+  filter(carrier == "HA")
+alaska_sample <- flights_sample |> 
+  filter(carrier == "AS")
+
+t_test_result <- t.test(alaska_sample$arr_delay, hawaii_flights$arr_delay)
+t_test_result
+
+```
+
+the p-value is not low enough for us to reject the null hypothesis, so therefore we say, there is insufficient data to reject the null hypothesis. Meaning there is not a statistically difference between the mean arrival delay between alaska and hawaii airlines. 
 
 ## D. Linear Regression
 
@@ -158,8 +254,26 @@ Researchers at the University of Texas in Austin, Texas tried to figure out what
 
 ```{r, warning = F, message = F}
 evals <- readr::read_csv("https://www.openintro.org/book/statdata/evals.csv")
+head(evals)
 ```
 
 10. Carry out a linear regression with `score` as the response variable and `age` as the single explanatory variable. Interpret your results.
 
+```{r}
+linear_regression_score_age <- lm(score ~ age, data = evals)
+linear_regression_score_age
+```
+
+There is a slight negative correlation between age and scores, with a regression line $\beta_1$ is -0.005938, and $\beta_0$ is 4.4, meaning when age is 0 the score is 4.4, which is not reasonable.
+
 11. Extend your regression model by adding an additional explanatory variable. What happens to your results? Are the new $p$-values appropriate to use?
+
+```{r}
+linear_regression_score_age <- lm(score ~ age + gender, data = evals)
+plot(linear_regression_score_age)
+summary(linear_regression_score_age)
+```
+
+The coefficient for age is approximately -0.00868
+The coefficient for gender (male) is approximately 0.19057
+Since age and gender cannot be zero in practice, the interpretation of the intercept may not be practically meaningful.
