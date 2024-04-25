@@ -1,0 +1,165 @@
+---
+title: "Lab 8"
+author: "Ryan Fernald"
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+    code-summary: "Code"
+---
+
+Remember, **follow the instructions below and use R Markdown to create a pdf document with your code and answers to the following questions on Gradescope.** You may find a template file by clicking "Code" in the top right corner of this page.
+
+## A. Bootstrapping the sampling distribution of the median
+
+1.  Using the `penguins` dataset in the `palmerpenguins` package, construct a confidence interval for the mean `body_mass_g` for female Adelie penguins based on using a normal distribution based on the central limit theorem. You should compute the confidence interval without using `confint()`.
+
+```{r}
+library(palmerpenguins)
+library(tidyverse)
+data(penguins)
+head(penguins)
+```
+
+```{r}
+female_penguins <- penguins |>
+  filter(species == 'Adelie', sex == 'female')
+head(female_penguins)
+```
+
+```{r}
+mean_bm <- mean(female_penguins$body_mass_g)
+sd_bm <- sd(female_penguins$body_mass_g)
+```
+
+```{r}
+z <- qnorm(1 - 0.05/2)
+
+ci_variance <- z * ( sd_bm / sqrt(length(female_penguins$body_mass_g)))
+
+low_ci <- mean_bm - ci_variance
+high_ci <- mean_bm + ci_variance
+
+ci <- c(low_ci, high_ci)
+
+cat("low ci:", ci[1], "     high ci:", ci[2])
+```
+
+2.  Construct a bootstrap confidence interval for the mean `body_mass_g` for female Adelie penguins using 10000 resamples.
+
+```{r}
+bs_ci <- replicate(10000, mean(sample(female_penguins$body_mass_g, replace = TRUE)))
+
+quantile(bs_ci, probs = c(.025, .975))
+```
+
+3.  Construct a bootstrap confidence interval for the median `body_mass_g` for female Adelie penguins using 10000 resamples.
+
+```{r}
+bs_ci_median <- replicate(10000, median(sample(female_penguins$body_mass_g, replace = TRUE)))
+
+quantile(bs_ci_median, probs = c(.025, .975))
+```
+
+## B. Simulations
+
+4.  Suppose that $Y\sim \mathrm{Poisson}(X)$ where $X\sim \mathrm{Exponential}(1)$. Use simulation to estimate $E(Y)$ and $\mathrm{Var}(Y)$.
+
+```{r}
+simulate_Y <- replicate(10000, {
+  X <- rexp(1, rate = 1)
+  Y <- rpois(1, lambda = X)
+  return(Y)
+})
+
+E_Y <- mean(simulate_Y)
+Var_Y <- var(simulate_Y)
+
+cat("Estimate of E(Y) from simulation:", E_Y, "\n")
+cat("Estimate of Var(Y) from simulation:", Var_Y)
+
+```
+
+5.  For this question, you will write a simulation to test the frequentist coverage of a 95% confidence interval for a proportion based on the normal approximation.
+
+    a.  First, write a function that takes two inputs: `n` and `p`. Your function should randomly generate some $X\sim \mathrm{Binomial}(n, p)$, compute $\widehat{p}= X/n$, and then compute the corresponding normal distribution-based confidence interval for $p$ **based on your sample** $\widehat{p}$. Your function should return `TRUE` if $p$ is in the confidence interval. You may use the following formula for the confidence interval:
+
+    $$\widehat{p}\pm z_{.975}\sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$$
+
+```{r}
+frequentist_coverage <- function(n, p) {
+  
+  X <- rbinom(1, n, p)
+  
+  p_hat <- X/n
+  
+  standard_error <- sqrt(p_hat * (1-p_hat) / n)
+  
+  lower_bound <- p_hat - qnorm(.975) * standard_error
+  upper_bound <- p_hat + qnorm(.975) * standard_error
+  
+  return(lower_bound <= p && upper_bound >= p)
+}
+```
+
+        
+    b.  Next, write a second function that takes three inputs: `n`, `p`, and `n_runs`, representing the number of times to run your simulation. This function should use your function from (a) to simulate `n_runs` binomial random variables and return the proportion of the `n_runs` for which $p$ is contained in the confidence interval.
+
+```{r}
+coverage_simulation <- function(n, p, n_runs) {
+  
+  coverage_portion <- mean(replicate(n_runs, frequentist_coverage(n, p)))
+  
+  return(coverage_portion)
+}
+```
+
+    c.  Test your function from (b) with `n = 20`, `p = .5`, and `n_runs = 1000`.
+    
+```{r}
+coverage_simulation(n_runs = 1000, n = 20, p = .5)
+```
+    
+    d.  Use your simulation code to investigate the following questions: For what values of `n` and `p` is the frequentist coverage close to the expected 95% value? For what values of `n` and `p` is the frequentist coverage very different to the expected 95% value?
+    
+```{r}
+coverage_simulation(n_runs = 10, n = 5, p = .5)
+coverage_simulation(n_runs = 1000, n = 5, p = .5)
+coverage_simulation(n_runs = 20, n = 500, p = .5)
+coverage_simulation(n_runs = 1000000, n = 10000, p = .5)
+
+```
+    
+
+
+## C. Hypothesis Testing
+
+Use the following code to obtain the Hawaiian Airlines and Alaska Airlines flights from the `nycflights13` package.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+library(nycflights13)
+data("flights")
+flights_sample <- flights |> 
+  filter(carrier %in% c("HA", "AS"))
+```
+
+6.  Compute a 95% confidence interval for the mean `arr_delay` for Alaska Airlines flights. Interpret your results.
+
+7.  Compute a 95% confidence interval for the mean `arr_delay` for Hawaiian Airlines flights. Interpret your results.
+
+8.  Compute a 95% confidence interval for the proportion of flights for which `arr_delay > 0` for Hawaiian Airlines flights. Interpret your results.
+
+9.  Consider the null hypothesis that the mean `arr_delay` for Alaska is equal to the mean `arr_delay` for Hawaiian and the alternative hypothesis that the mean `arr_delay` values are different for the two airlines. Perform an appropriate hypothesis test and interpret your results.
+
+## D. Linear Regression
+
+Researchers at the University of Texas in Austin, Texas tried to figure out what causes differences in instructor teaching evaluation scores. Use the following code to load data on 463 courses. A full description of the data can be found [here](https://www.openintro.org/book/statdata/?data=evals).
+
+```{r, warning = F, message = F}
+evals <- readr::read_csv("https://www.openintro.org/book/statdata/evals.csv")
+```
+
+10. Carry out a linear regression with `score` as the response variable and `age` as the single explanatory variable. Interpret your results.
+
+11. Extend your regression model by adding an additional explanatory variable. What happens to your results? Are the new $p$-values appropriate to use?
