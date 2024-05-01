@@ -1,0 +1,47 @@
+---
+title: "Check-in 8"
+author: "Ryan Fernald"
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+    code-summary: "Code"
+---
+
+Remember, **follow the instructions below and use R Markdown to create a pdf document with your code and answers to the following questions on Gradescope.** You may find a template file by clicking "Code" in the top right corner of this page.
+
+1. Download and read the documentation for the [Childcare Costs data](https://github.com/rfordatascience/tidytuesday/blob/master/data/2023/2023-05-09/readme.md).
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+childcare_costs <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-05-09/childcare_costs.csv')
+childcare_costs
+```
+
+
+2. Use visualization and regression to explore the following question: Is there a relationship between a county's average childcare costs and its median household income? There will be more than one way to answer this question--the important thing is to **explain** the choices you make in your analysis.
+
+
+```{r}
+ggplot(childcare_costs, aes(x = mfccsa, y = mhi_2018)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "lm", color = "blue") +
+  labs(x = "Median Family Child Care Cost", 
+       y = "Median Household Income 2018") +
+  ggtitle("Child Care Costs vs. Median Household Income 2018")
+```
+
+From this plot there appears to be some degree of a positive relationship between Child Care Costs and Median Household Income in 2018. 
+
+
+```{r}
+lm_model <- lm(mhi_2018 ~ mfccsa, data = childcare_costs)
+
+lm_model
+
+summary(lm_model)
+```
+It seems that according to our linear regression model we have a statistically significant r^2 value, supporting a conclusion that there is a positive relationship between Child Care Costs and Median Household Income in 2018. 
